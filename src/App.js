@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext } from 'react-beautiful-dnd';
 import Column from './components/Column';
 
@@ -25,8 +25,15 @@ const initialData = {
 };
 
 function App() {
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(() => {
+    const savedData = localStorage.getItem('data');
+    return savedData ? JSON.parse(savedData) : initialData;
+  });
   const [newTaskContent, setNewTaskContent] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('data', JSON.stringify(data));
+  }, [data]);
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
@@ -118,10 +125,32 @@ function App() {
     });
   };
 
+  const clearAllTasks = () => {
+    const clearedColumns = {};
+    Object.keys(data.columns).forEach((columnId) => {
+      clearedColumns[columnId] = {
+        ...data.columns[columnId],
+        taskIds: [],
+      };
+    });
+    setData({
+      ...initialData,
+      columns: clearedColumns,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">
       <div className="max-w-7xl mx-auto bg-gray-800 rounded-lg shadow-2xl p-6 border border-purple-900/30">
-        <h1 className="text-2xl font-bold text-purple-100 mb-6 text-center">Task Manager</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-purple-100">Task Manager</h1>
+          <button
+            onClick={clearAllTasks}
+            className="px-4 py-2 text-sm text-red-400 hover:text-red-300 transition-colors duration-200"
+          >
+            Clear All
+          </button>
+        </div>
         <form onSubmit={addTask} className="mb-8 flex flex-col sm:flex-row gap-2">
           <input
             type="text"
